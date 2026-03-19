@@ -635,12 +635,16 @@ function generate(){
 
 // ── GEOCODING (city name → lat/lon)
 async function geocode(city){
-  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&featuretype=country,state,city,town,village`);
   const d=await r.json();
   if(!d.length)throw new Error('Not found');
-  return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),city:d[0].display_name.split(',')[0]};
+  const result=d[0];
+  // Use centroid for countries/regions — Nominatim sometimes returns 0,0 for these
+  const lat=parseFloat(result.lat);
+  const lon=parseFloat(result.lon);
+  if(Math.abs(lat)<0.01&&Math.abs(lon)<0.01)throw new Error('Bad coordinates');
+  return{lat,lon,city:result.display_name.split(',')[0]};
 }
-
 async function reverseGeocode(lat,lon){
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
@@ -934,7 +938,7 @@ function injectTripForecast(t,data,city,isFormal,isGenZ,isMuji,isMax,isPreppy){
           <div class="tdr-wx">${r.icon} ${r.max}°/${r.min}°${r.rain>0.5?` 🌧`:''}</div>
           <div class="tdr-outfit"><span class="mu">Shoes</span> ${r.o.shoes} · <span class="mu">Top</span> ${r.o.top} · <span class="mu">Outer</span> ${r.o.outer}</div>
         </div>`).join('')}
-    </div>`:'<div class="hint">Trip dates are outside the 16-day forecast window. Packing list is based on your style profile.</div>'}
+    </div>`:'<div class="hint"> ❌ Your trip dates are outside the 16-day forecast window. Packing list is based on your style profile.</div>'}
     ${packingHTML(t,nights,isFormal,isGenZ,isMuji,isMax,isPreppy)}`;
 }
 
