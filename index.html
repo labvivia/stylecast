@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stylecast</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --border: #e8e8e4;
+    --border-strong: #c8c8c0;
+    --ink: #1a1a18;
+    --muted: #888880;
+    --gap: clamp(1.25rem, 4vw, 3rem);
+    --r: 2px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    padding: 1.25rem var(--gap);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+  .header-date { font-size: 0.75rem; color: var(--muted); font-weight: 300; }
+
+  .progress {
+    padding: 0 var(--gap);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .progress::-webkit-scrollbar { display: none; }
+  .step {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.8rem 1rem 0.8rem 0;
+    white-space: nowrap; opacity: 0.3; transition: opacity 0.2s;
+    font-size: 0.75rem; font-weight: 400; color: var(--ink);
+  }
+  .step:first-child { padding-left: 0; }
+  .step.active { opacity: 1; }
+  .step.done { opacity: 0.5; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); flex-shrink: 0; }
+  .step.active .dot, .step.done .dot { background: var(--ink); }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: up 0.25s ease; }
+  @keyframes up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  .page { max-width: 600px; margin: 0 auto; padding: 2.75rem var(--gap) 5rem; }
+  .page-title { font-family: 'Lora', serif; font-size: clamp(1.4rem,4vw,1.9rem); font-weight: 400; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+  .page-title em { font-style: italic; color: var(--muted); }
+  .page-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 2.25rem; font-weight: 300; }
+
+  .field { margin-bottom: 1.75rem; }
+  .field-label { display: block; font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.65rem; }
+
+  input[type="text"], input[type="date"] {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 0.6rem 0.8rem;
+    font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 400;
+    color: var(--ink); appearance: none; -webkit-appearance: none; transition: border-color 0.15s;
+  }
+  input:focus { outline: none; border-color: var(--ink); }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .pill {
+    padding: 0.45rem 0.85rem; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface); font-family: 'Inter', sans-serif; font-size: 0.78rem;
+    font-weight: 400; color: var(--muted); cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .pill:hover { border-color: var(--border-strong); color: var(--ink); }
+  .pill.selected { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .aes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  @media (max-width: 440px) { .aes-grid { grid-template-columns: 1fr; } }
+  .aes-card {
+    padding: 0.75rem 0.9rem; border: 1px solid var(--border); border-radius: var(--r);
+    background: var(--surface); font-family: 'Inter', sans-serif; cursor: pointer;
+    transition: all 0.12s; text-align: left;
+  }
+  .aes-card:hover { border-color: var(--border-strong); }
+  .aes-card.selected { background: var(--ink); border-color: var(--ink); }
+  .aes-name { font-size: 0.82rem; font-weight: 500; color: var(--ink); margin-bottom: 0.15rem; }
+  .aes-desc { font-size: 0.72rem; color: var(--muted); font-weight: 300; line-height: 1.4; }
+  .aes-card.selected .aes-name { color: #fff; }
+  .aes-card.selected .aes-desc { color: rgba(255,255,255,0.55); }
+
+  input[type="range"] {
+    width: 100%; appearance: none; height: 2px; background: var(--border);
+    border: none; padding: 0; cursor: pointer; border-radius: 1px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none; width: 13px; height: 13px; background: var(--ink); border-radius: 50%; cursor: pointer;
+  }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 0.5rem; font-weight: 300; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.75rem 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.6rem 1.4rem; font-family: 'Inter', sans-serif;
+    font-size: 0.8rem; font-weight: 500; cursor: pointer;
+    border-radius: var(--r); transition: all 0.12s;
+  }
+  .btn-primary { background: var(--ink); color: #fff; border: 1px solid var(--ink); }
+  .btn-primary:hover { opacity: 0.82; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--ink); }
+  .btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 2.25rem; }
+
+  .trip-add { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.4rem; align-items: end; margin-bottom: 0.75rem; }
+  @media (max-width: 500px) { .trip-add { grid-template-columns: 1fr 1fr; } }
+  .trip-add button {
+    padding: 0.6rem 0.9rem; background: var(--ink); color: #fff; border: none;
+    border-radius: var(--r); font-family: 'Inter', sans-serif; font-size: 0.8rem;
+    font-weight: 500; cursor: pointer; white-space: nowrap;
+  }
+  .trip-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 0.9rem; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); margin-bottom: 0.4rem; animation: up 0.2s ease;
+  }
+  .trip-dest-name { font-family: 'Lora', serif; font-size: 0.95rem; margin-bottom: 0.1rem; }
+  .trip-dates { font-size: 0.73rem; color: var(--muted); font-weight: 300; }
+  .trip-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0.2rem; transition: color 0.12s; }
+  .trip-rm:hover { color: var(--ink); }
+
+  .w-cat-label { font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 1.25rem 0 0.6rem; }
+  .w-cat-label:first-of-type { margin-top: 0; }
+  .w-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .wp {
+    padding: 0.38rem 0.7rem; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface); font-size: 0.75rem; color: var(--muted);
+    cursor: pointer; transition: all 0.12s; display: flex; align-items: center; gap: 0.25rem;
+  }
+  .wp:hover { border-color: var(--border-strong); color: var(--ink); }
+  .wp.selected { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  /* ── DASHBOARD ── */
+  .dash-hero { background: var(--ink); color: #fff; padding: 2.25rem var(--gap); }
+  .dash-hero-inner { max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: start; }
+  @media (max-width: 440px) { .dash-hero-inner { grid-template-columns: 1fr; } }
+  .d-loc { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.38); margin-bottom: 0.4rem; }
+  .d-temp { font-family: 'Lora', serif; font-size: clamp(3rem,10vw,5rem); font-weight: 400; line-height: 1; letter-spacing: -0.03em; }
+  .d-temp sup { font-size: 0.35em; vertical-align: super; }
+  .d-desc { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin-top: 0.35rem; font-style: italic; font-family: 'Lora', serif; }
+  .d-meta { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .d-meta-r { font-size: 0.73rem; color: rgba(255,255,255,0.38); font-weight: 300; }
+  .d-meta-r span { color: rgba(255,255,255,0.72); }
+  .d-icon { font-size: 2.75rem; text-align: right; }
+
+  /* location fix bar */
+  .loc-bar {
+    background: #1a1a18;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 0.75rem var(--gap);
+  }
+  .loc-bar-inner {
+    max-width: 600px; margin: 0 auto;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .loc-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); white-space: nowrap; }
+  .loc-input {
+    flex: 1; min-width: 140px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--r);
+    padding: 0.4rem 0.65rem;
+    font-family: 'Inter', sans-serif; font-size: 0.78rem; color: #fff;
+    appearance: none;
+  }
+  .loc-input::placeholder { color: rgba(255,255,255,0.25); }
+  .loc-input:focus { outline: none; border-color: rgba(255,255,255,0.35); }
+  .loc-btn {
+    padding: 0.4rem 0.85rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--r);
+    font-family: 'Inter', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.7);
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .loc-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+  .dash-tabs {
+    border-bottom: 1px solid var(--border); padding: 0 var(--gap);
+    display: flex; overflow-x: auto; scrollbar-width: none;
+    background: var(--surface); position: sticky; top: 55px; z-index: 90;
+  }
+  .dash-tabs::-webkit-scrollbar { display: none; }
+  .dtab {
+    padding: 0.8rem 1.1rem; font-family: 'Inter', sans-serif; font-size: 0.78rem;
+    font-weight: 400; color: var(--muted); background: none; border: none;
+    border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+    margin-bottom: -1px; transition: all 0.12s;
+  }
+  .dtab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .dpanel { display: none; }
+  .dpanel.active { display: block; animation: up 0.2s ease; }
+
+  /* ── WEATHER STRIP ── */
+  .wx-strip {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem var(--gap);
+  }
+  .wx-strip-inner { max-width: 600px; margin: 0 auto; }
+  .wx-strip-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.6rem; }
+  .wx-days { display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.25rem; }
+  .wx-days::-webkit-scrollbar { display: none; }
+  .wx-day {
+    flex-shrink: 0; text-align: center; padding: 0.6rem 0.75rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    min-width: 58px;
+  }
+  .wx-day.today { border-color: var(--ink); }
+  .wx-day-name { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem; }
+  .wx-day.today .wx-day-name { color: var(--ink); font-weight: 500; }
+  .wx-day-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+  .wx-day-temp { font-family: 'Lora', serif; font-size: 0.85rem; font-weight: 400; }
+  .wx-day-rain { font-size: 0.6rem; color: #6fa3d0; margin-top: 0.15rem; }
+
+  /* ── OUTFIT ── */
+  .ow { max-width: 600px; margin: 0 auto; padding: 1.75rem var(--gap) 4rem; }
+  .outfit-lead { font-family: 'Lora', serif; font-size: clamp(1rem,3vw,1.3rem); font-weight: 400; line-height: 1.45; margin-bottom: 1.5rem; }
+  .outfit-lead em { font-style: italic; color: var(--muted); }
+  .outfit-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  @media (max-width: 400px) { .outfit-cards { grid-template-columns: 1fr; } }
+  .ocard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 0.9rem 1rem; }
+  .ocat { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.4rem; }
+  .oitem { font-family: 'Lora', serif; font-size: 0.9rem; font-weight: 400; line-height: 1.35; color: var(--ink); margin-bottom: 0.25rem; }
+  .onote { font-size: 0.73rem; color: var(--muted); font-weight: 300; line-height: 1.5; }
+
+  .layer-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 0.8rem 1rem; margin-top: 0.6rem; }
+  .lbar-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.5rem; }
+  .lbar-items { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+  .ltag { padding: 0.28rem 0.65rem; border: 1px solid var(--border-strong); border-radius: 999px; font-size: 0.73rem; color: var(--ink); }
+  .lsep { color: var(--muted); font-size: 0.73rem; }
+  .hint { font-size: 0.75rem; color: var(--muted); font-weight: 300; padding: 0.7rem 0.9rem; border-left: 2px solid var(--border); line-height: 1.6; margin-top: 0.75rem; }
+
+  /* WEEK */
+  .week-row { display: grid; grid-template-columns: 72px 1fr; gap: 1.1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .wday { font-family: 'Lora', serif; font-size: 0.85rem; font-weight: 400; }
+  .wdate { font-size: 0.68rem; color: var(--muted); font-weight: 300; }
+  .wicon { font-size: 1.4rem; margin: 0.3rem 0; }
+  .wtemps { font-size: 0.72rem; color: var(--muted); font-weight: 300; }
+  .woutfit { font-size: 0.78rem; line-height: 1.65; color: var(--ink); }
+  .woutfit .mu { color: var(--muted); }
+
+  /* TRIPS */
+  .trip-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 1.5rem; }
+  .tbh { padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: baseline; }
+  .tbdest { font-family: 'Lora', serif; font-size: 1.05rem; font-weight: 400; }
+  .tbnights { font-size: 0.73rem; color: var(--muted); font-weight: 300; }
+  .tbb { padding: 1.1rem; }
+  .tbdates { font-size: 0.73rem; color: var(--muted); margin-bottom: 1rem; font-weight: 300; }
+
+  /* trip day-by-day */
+  .trip-days { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+  .trip-day-row {
+    display: grid; grid-template-columns: 90px auto 1fr; gap: 0.75rem;
+    align-items: center; padding: 0.7rem 0.9rem;
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--r);
+  }
+  .tdr-date { font-size: 0.72rem; font-weight: 400; color: var(--ink); }
+  .tdr-wx { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
+  .tdr-outfit { font-size: 0.75rem; color: var(--ink); line-height: 1.5; }
+  .tdr-outfit .mu { color: var(--muted); }
+  .trip-loading { font-size: 0.78rem; color: var(--muted); font-style: italic; font-family: 'Lora', serif; padding: 0.75rem 0; }
+
+  /* packing */
+  .pack-title { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .pcats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+  @media (max-width: 400px) { .pcats { grid-template-columns: 1fr; } }
+  .pcat-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.45rem; }
+  .pitems { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+  .pitems li { font-size: 0.78rem; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; transition: opacity 0.12s; font-weight: 300; color: var(--ink); }
+  .pitems li.checked { opacity: 0.3; text-decoration: line-through; }
+  .pitems li::before { content: ''; width: 5px; height: 5px; border: 1px solid var(--border-strong); border-radius: 50%; flex-shrink: 0; }
+  .pitems li.checked::before { background: var(--ink); border-color: var(--ink); }
+
+  /* WARDROBE */
+  .wsum-cat { margin-bottom: 1.25rem; }
+  .wsum-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+  .wsum-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .wtag { padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.75rem; color: var(--ink); font-weight: 300; }
+  .roadmap { padding: 1rem 1.1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); margin-top: 2rem; }
+  .rm-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: var(--muted); margin-bottom: 0.5rem; }
+  .rm-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+  .rm-list li { font-size: 0.78rem; color: var(--muted); font-weight: 300; display: flex; align-items: center; gap: 0.4rem; }
+  .rm-list li::before { content: '—'; }
+
+  .loading { min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem; }
+  .loading-title { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 400; font-style: italic; color: var(--ink); }
+  .loading-sub { font-size: 0.73rem; color: var(--muted); font-weight: 300; }
+  .spin { width: 22px; height: 22px; border: 1.5px solid var(--border); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.75s linear infinite; }
+  .spin-sm { width: 14px; height: 14px; border: 1.5px solid var(--border); border-top-color: var(--muted); border-radius: 50%; animation: spin 0.75s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty { font-size: 0.875rem; color: var(--muted); font-style: italic; font-family: 'Lora', serif; padding: 2rem 0; font-weight: 300; }
+  .restart-link { font-size: 0.73rem; color: var(--muted); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 300; text-decoration: underline; text-underline-offset: 2px; padding: 0; }
+  .restart-link:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Stylecast</div>
+  <div class="header-date" id="hdate"></div>
+</header>
+
+<nav class="progress">
+  <div class="step active"><span class="dot"></span>Body</div>
+  <div class="step"><span class="dot"></span>Style</div>
+  <div class="step"><span class="dot"></span>Trips</div>
+  <div class="step"><span class="dot"></span>Wardrobe</div>
+  <div class="step"><span class="dot"></span>Forecast</div>
+</nav>
+
+<!-- SCREEN 1 -->
+<div class="screen active" id="screen-1">
+  <div class="page">
+    <h1 class="page-title">How does your body <em>run?</em></h1>
+    <p class="page-sub">Calibrates every suggestion to how you actually experience temperature.</p>
+    <div class="field">
+      <label class="field-label">Temperature tendency</label>
+      <div class="pills" id="temp-tend">
+        <button class="pill" data-val="hot">I run hot</button>
+        <button class="pill" data-val="cold">I run cold</button>
+        <button class="pill" data-val="neutral">Pretty neutral</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">If you had to choose, you'd rather feel…</label>
+      <div class="pills" id="temp-pref">
+        <button class="pill" data-val="too-hot">A little too warm</button>
+        <button class="pill" data-val="too-cold">A little too cool</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Temperature sensitivity</label>
+      <input type="range" id="sensitivity" min="1" max="5" value="3">
+      <div class="slider-labels"><span>Barely notice</span><span>Very sensitive</span></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goTo(2)">Continue →</button></div>
+  </div>
+</div>
+
+<!-- SCREEN 2 -->
+<div class="screen" id="screen-2">
+  <div class="page">
+    <h1 class="page-title">What's your <em>style?</em></h1>
+    <p class="page-sub">Pick one or more — outfit suggestions will reflect your choices.</p>
+    <div class="field">
+      <label class="field-label">Your aesthetic</label>
+      <div class="aes-grid" id="style-aesthetic">
+        <button class="aes-card" data-val="classic"><div class="aes-name">Classic &amp; timeless</div><div class="aes-desc">Tailored, elegant, never chases trends</div></button>
+        <button class="aes-card" data-val="genz"><div class="aes-name">Gen Z / 90s</div><div class="aes-desc">Loose fit, baggy, vintage energy</div></button>
+        <button class="aes-card" data-val="maximal"><div class="aes-name">Maxxximalist</div><div class="aes-desc">More is more — pattern, colour, drama</div></button>
+        <button class="aes-card" data-val="muji"><div class="aes-name">Muji-core</div><div class="aes-desc">Clean lines, neutral palette, pared back</div></button>
+        <button class="aes-card" data-val="preppy"><div class="aes-name">Preppy</div><div class="aes-desc">Collegiate, polished, put-together</div></button>
+        <button class="aes-card" data-val="normal"><div class="aes-name">Just… normal</div><div class="aes-desc">Practical, comfortable, no fuss</div></button>
+      </div>
+    </div>
+    <hr>
+    <div class="field">
+      <label class="field-label">Layering preference</label>
+      <div class="pills" id="layer-pref">
+        <button class="pill" data-val="layers">Love layers</button>
+        <button class="pill" data-val="minimal">Keep it simple</button>
+        <button class="pill" data-val="situational">Depends on the day</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Default dress code</label>
+      <div class="pills" id="default-dress">
+        <button class="pill" data-val="formal">Formal</button>
+        <button class="pill" data-val="business">Business casual</button>
+        <button class="pill" data-val="casual">Casual</button>
+        <button class="pill" data-val="mixed">Varies by day</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Any specific formality requirements this week?</label>
+      <input type="text" id="formality-notes" placeholder="e.g. client meeting Thursday, dinner Saturday">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3 -->
+<div class="screen" id="screen-3">
+  <div class="page">
+    <h1 class="page-title">Where are you <em>headed?</em></h1>
+    <p class="page-sub">Add upcoming trips for a live day-by-day forecast and packing list.</p>
+    <div class="field">
+      <div class="trip-add">
+        <div><label class="field-label">Destination</label><input type="text" id="trip-dest" placeholder="Tokyo, Cape Town…"></div>
+        <div><label class="field-label">Depart</label><input type="date" id="trip-from"></div>
+        <div><label class="field-label">Return</label><input type="date" id="trip-to"></div>
+        <button onclick="addTrip()" style="margin-top:1.4rem;">Add</button>
+      </div>
+      <div id="trips-list"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4 -->
+<div class="screen" id="screen-4">
+  <div class="page">
+    <h1 class="page-title">What's in your <em>wardrobe?</em></h1>
+    <p class="page-sub">Tap what you own for specific suggestions. Skip for general guidance.</p>
+    <div id="wardrobe-grid"></div>
+    <hr>
+    <div class="field">
+      <label class="field-label">Add a specific piece</label>
+      <div style="display:flex;gap:0.4rem;">
+        <input type="text" id="custom-item" placeholder="Navy wool blazer, white linen shirt…">
+        <button class="btn btn-ghost" style="white-space:nowrap;" onclick="addCustomItem()">Add</button>
+      </div>
+      <div id="custom-confirm" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;min-height:1rem;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" onclick="generate()">Generate forecast →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: DASHBOARD -->
+<div class="screen" id="screen-5">
+  <div id="loading-state" class="loading">
+    <div class="spin"></div>
+    <div class="loading-title">Building your forecast…</div>
+    <div class="loading-sub">Locating · fetching weather · assembling looks</div>
+  </div>
+  <div id="dashboard" style="display:none;">
+    <div class="dash-hero" id="dash-hero"></div>
+    <!-- location correction bar -->
+    <div class="loc-bar">
+      <div class="loc-bar-inner">
+        <span class="loc-label">Wrong location?</span>
+        <input class="loc-input" id="loc-override" type="text" placeholder="Enter your city…">
+        <button class="loc-btn" onclick="overrideLocation()">Update</button>
+      </div>
+    </div>
+    <div class="dash-tabs">
+      <button class="dtab active" onclick="tab('today')">Today</button>
+      <button class="dtab" onclick="tab('week')">This week</button>
+      <button class="dtab" onclick="tab('trips')">Trips</button>
+      <button class="dtab" onclick="tab('wardrobe')">Wardrobe</button>
+    </div>
+    <!-- weather strip (shown on today + week tabs) -->
+    <div class="wx-strip" id="wx-strip"></div>
+    <div class="dpanel active" id="panel-today"></div>
+    <div class="dpanel" id="panel-week"></div>
+    <div class="dpanel" id="panel-trips"></div>
+    <div class="dpanel" id="panel-wardrobe"></div>
+    <div style="text-align:center;padding:1.25rem;border-top:1px solid var(--border);">
+      <button class="restart-link" onclick="restart()">Edit profile</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S = {
+  body:{tendency:'',preference:'',sensitivity:3},
+  style:{aesthetics:[],layers:'',dresscode:'',notes:''},
+  trips:[],wardrobe:{},custom:[],weather:null,loc:null,
+};
+
+const WD=[
+  {id:'heavy-coat',e:'🧥',n:'Heavy coat',c:'Outerwear'},
+  {id:'trench',e:'🧥',n:'Trench coat',c:'Outerwear'},
+  {id:'puffer',e:'🫧',n:'Puffer jacket',c:'Outerwear'},
+  {id:'blazer',e:'🧣',n:'Blazer',c:'Outerwear'},
+  {id:'denim-jacket',e:'👖',n:'Denim jacket',c:'Outerwear'},
+  {id:'rain-jacket',e:'🌧️',n:'Rain jacket',c:'Outerwear'},
+  {id:'tshirt',e:'👕',n:'T-shirts',c:'Tops'},
+  {id:'dress-shirt',e:'👔',n:'Dress shirts',c:'Tops'},
+  {id:'blouse',e:'🌸',n:'Blouses',c:'Tops'},
+  {id:'sweater',e:'🧶',n:'Sweaters',c:'Tops'},
+  {id:'hoodie',e:'🫙',n:'Hoodie',c:'Tops'},
+  {id:'turtleneck',e:'🧣',n:'Turtleneck',c:'Tops'},
+  {id:'trousers',e:'👖',n:'Trousers',c:'Bottoms'},
+  {id:'jeans',e:'👖',n:'Jeans',c:'Bottoms'},
+  {id:'dress',e:'👗',n:'Dresses',c:'Bottoms'},
+  {id:'skirt',e:'👗',n:'Skirts',c:'Bottoms'},
+  {id:'shorts',e:'🩳',n:'Shorts',c:'Bottoms'},
+  {id:'sneakers',e:'👟',n:'Sneakers',c:'Footwear'},
+  {id:'boots',e:'🥾',n:'Boots',c:'Footwear'},
+  {id:'heels',e:'👠',n:'Heels',c:'Footwear'},
+  {id:'loafers',e:'🥿',n:'Loafers',c:'Footwear'},
+  {id:'sandals',e:'👡',n:'Sandals',c:'Footwear'},
+  {id:'scarf',e:'🧣',n:'Scarves',c:'Accessories'},
+  {id:'hat',e:'🧢',n:'Hats',c:'Accessories'},
+  {id:'sunglasses',e:'🕶️',n:'Sunglasses',c:'Accessories'},
+  {id:'umbrella',e:'☂️',n:'Umbrella',c:'Accessories'},
+];
+
+const WX={
+  0:['☀️','Clear'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],
+  45:['🌫️','Foggy'],48:['🌫️','Icy fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],
+  61:['🌧️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],
+  71:['🌨️','Light snow'],73:['🌨️','Snow'],80:['🌦️','Showers'],95:['⛈️','Thunderstorm'],
+};
+function wx(c){return WX[c]||WX[Math.floor(c/10)*10]||['🌡️','Mixed'];}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('hdate').textContent=
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  buildWardrobe();
+  setupPills();
+});
+
+function setupPills(){
+  ['temp-tend','temp-pref','layer-pref','default-dress'].forEach(id=>{
+    document.getElementById(id)?.querySelectorAll('.pill').forEach(b=>
+      b.addEventListener('click',()=>{
+        b.closest('.pills').querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));
+        b.classList.add('selected');
+      })
+    );
+  });
+  document.getElementById('style-aesthetic')?.querySelectorAll('.aes-card').forEach(b=>
+    b.addEventListener('click',()=>b.classList.toggle('selected'))
+  );
+}
+
+function buildWardrobe(){
+  const el=document.getElementById('wardrobe-grid');
+  [...new Set(WD.map(i=>i.c))].forEach(cat=>{
+    const lbl=document.createElement('div');lbl.className='w-cat-label';lbl.textContent=cat;el.appendChild(lbl);
+    const row=document.createElement('div');row.className='w-pills';
+    WD.filter(i=>i.c===cat).forEach(item=>{
+      const b=document.createElement('button');b.className='wp';b.id=`wp-${item.id}`;
+      b.innerHTML=`<span>${item.e}</span>${item.n}`;
+      b.addEventListener('click',()=>{b.classList.toggle('selected');S.wardrobe[item.id]=b.classList.contains('selected');});
+      row.appendChild(b);
+    });
+    el.appendChild(row);
+  });
+}
+
+function goTo(n){
+  document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('active',i+1===n));
+  document.querySelectorAll('.step').forEach((s,i)=>{s.classList.toggle('active',i+1===n);s.classList.toggle('done',i+1<n);});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function tab(id){
+  document.querySelectorAll('.dtab').forEach((t,i)=>t.classList.toggle('active',['today','week','trips','wardrobe'][i]===id));
+  document.querySelectorAll('.dpanel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`panel-${id}`).classList.add('active');
+  // show/hide wx strip
+  document.getElementById('wx-strip').style.display=['today','week'].includes(id)?'block':'none';
+}
+
+function addTrip(){
+  const dest=document.getElementById('trip-dest').value.trim();
+  const from=document.getElementById('trip-from').value;
+  const to=document.getElementById('trip-to').value;
+  if(!dest)return;
+  S.trips.push({id:Date.now(),dest,from,to});
+  renderTripsList();
+  ['trip-dest','trip-from','trip-to'].forEach(id=>document.getElementById(id).value='');
+}
+function removeTrip(id){S.trips=S.trips.filter(t=>t.id!==id);renderTripsList();}
+function renderTripsList(){
+  document.getElementById('trips-list').innerHTML=S.trips.map(t=>{
+    const n=t.from&&t.to?Math.round((new Date(t.to)-new Date(t.from))/86400000):null;
+    return `<div class="trip-item">
+      <div><div class="trip-dest-name">${t.dest}</div>
+      <div class="trip-dates">${t.from?fd(t.from):'—'} → ${t.to?fd(t.to):'—'}${n?` · ${n} night${n!==1?'s':''}`:''}
+      </div></div>
+      <button class="trip-rm" onclick="removeTrip(${t.id})">×</button>
+    </div>`;
+  }).join('');
+}
+function fd(d){return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+
+function addCustomItem(){
+  const inp=document.getElementById('custom-item');const val=inp.value.trim();if(!val)return;
+  S.custom.push(val);inp.value='';
+  const c=document.getElementById('custom-confirm');c.textContent=`Added: ${val}`;
+  setTimeout(()=>c.textContent='',2000);
+}
+
+function sel(id){return document.querySelector(`#${id} .pill.selected`)?.dataset.val||'';}
+function multiSel(id){return[...document.querySelectorAll(`#${id} .aes-card.selected`)].map(b=>b.dataset.val);}
+
+function generate(){
+  S.body.tendency=sel('temp-tend');S.body.preference=sel('temp-pref');
+  S.body.sensitivity=+document.getElementById('sensitivity').value;
+  S.style.aesthetics=multiSel('style-aesthetic');S.style.layers=sel('layer-pref');
+  S.style.dresscode=sel('default-dress');S.style.notes=document.getElementById('formality-notes').value;
+  goTo(5);
+  navigator.geolocation
+    ?navigator.geolocation.getCurrentPosition(
+        p=>{S.loc={lat:p.coords.latitude,lon:p.coords.longitude};fetchWx();},
+        ()=>fetchWx(true),
+        {timeout:8000}
+      )
+    :fetchWx(true);
+}
+
+// ── GEOCODING (city name → lat/lon)
+async function geocode(city){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+  const d=await r.json();
+  if(!d.length)throw new Error('Not found');
+  return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),city:d[0].display_name.split(',')[0]};
+}
+
+async function reverseGeocode(lat,lon){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const d=await r.json();
+    return d.address?.city||d.address?.town||d.address?.village||d.address?.county||'Your location';
+  }catch{return'Your location';}
+}
+
+async function fetchWx(fb=false){
+  try{
+    let lat,lon,city;
+    if(fb||!S.loc){lat=45.46;lon=9.19;city='Milan (default — tap to correct)';}
+    else{
+      lat=S.loc.lat;lon=S.loc.lon;
+      city=await reverseGeocode(lat,lon);
+    }
+    S.loc={lat,lon,city};
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m,apparent_temperature&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=7`);
+    S.weather=await r.json();
+    renderDash(city);
+  }catch(e){console.error(e);renderFallback();}
+}
+
+// Manual location override
+async function overrideLocation(){
+  const val=document.getElementById('loc-override').value.trim();
+  if(!val)return;
+  const btn=document.querySelector('.loc-btn');
+  btn.textContent='…';btn.disabled=true;
+  try{
+    const g=await geocode(val);
+    S.loc={lat:g.lat,lon:g.lon,city:g.city};
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m,apparent_temperature&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=7`);
+    S.weather=await r.json();
+    renderDash(g.city);
+    document.getElementById('loc-override').value='';
+  }catch{btn.textContent='Not found';}
+  finally{setTimeout(()=>{btn.textContent='Update';btn.disabled=false;},1500);}
+}
+
+function renderDash(city){
+  const w=S.weather,cur=w.current,d=w.daily;
+  const[icon,desc]=wx(d.weathercode[0]);
+  document.getElementById('dash-hero').innerHTML=`
+    <div class="dash-hero-inner">
+      <div>
+        <div class="d-loc">📍 ${city}</div>
+        <div class="d-temp">${Math.round(cur.temperature_2m)}<sup>°C</sup></div>
+        <div class="d-desc">${desc}</div>
+        <div class="d-meta">
+          <div class="d-meta-r">Feels like <span>${Math.round(cur.apparent_temperature)}°C</span></div>
+          <div class="d-meta-r">High <span>${Math.round(d.temperature_2m_max[0])}°</span> · Low <span>${Math.round(d.temperature_2m_min[0])}°</span></div>
+          <div class="d-meta-r">Wind <span>${Math.round(cur.windspeed_10m)} km/h</span> · Humidity <span>${cur.relativehumidity_2m}%</span></div>
+        </div>
+      </div>
+      <div class="d-icon">${icon}</div>
+    </div>`;
+
+  renderWxStrip(d);
+  renderToday(cur.apparent_temperature,d.weathercode[0],d.precipitation_sum[0]);
+  renderWeek(d);
+  renderTripsPanel();
+  renderWardrobePanel();
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+}
+
+// ── 7-DAY WEATHER STRIP
+function renderWxStrip(d){
+  const today=new Date();
+  document.getElementById('wx-strip').innerHTML=`
+    <div class="wx-strip-inner">
+      <div class="wx-strip-label">7-day forecast</div>
+      <div class="wx-days">
+        ${d.time.map((t,i)=>{
+          const date=new Date(t+'T12:00:00');
+          const isToday=i===0;
+          const[icon]=wx(d.weathercode[i]);
+          const max=Math.round(d.temperature_2m_max[i]);
+          const min=Math.round(d.temperature_2m_min[i]);
+          const rain=d.precipitation_sum[i];
+          return`<div class="wx-day${isToday?' today':''}">
+            <div class="wx-day-name">${isToday?'Today':date.toLocaleDateString('en-GB',{weekday:'short'})}</div>
+            <div class="wx-day-icon">${icon}</div>
+            <div class="wx-day-temp">${max}°<span style="color:var(--muted);font-size:0.72rem;">/${min}°</span></div>
+            ${rain>0.5?`<div class="wx-day-rain">🌧 ${rain.toFixed(0)}mm</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+// ── OUTFIT LOGIC
+function outfit(temp,wxCode,rain,prefs){
+  const adj=prefs.tendency==='hot'?2:prefs.tendency==='cold'?-2:0;
+  const T=temp+adj;
+  const rainy=[51,53,61,63,65,80,95].includes(wxCode);
+  const layers=prefs.layers==='layers';
+  const formal=prefs.dresscode==='formal';
+  const aes=prefs.aesthetics||[];
+  const isClassic=aes.includes('classic'),isGenZ=aes.includes('genz'),
+        isMax=aes.includes('maximal'),isMuji=aes.includes('muji'),isPreppy=aes.includes('preppy');
+
+  if(T<8)return{
+    headline:"bundle up — it's a cold one",
+    shoes:rainy?'Lined waterproof boots':isGenZ?'Chunky boots or platforms':isMuji?'Clean minimal ankle boots':formal?'Polished leather boots':'Ankle boots',
+    shoesNote:rainy?'Waterproofing essential today.':'',
+    top:isMax?'Bold patterned knit over a layered turtleneck':isGenZ?'Oversized hoodie or chunky knit, worn loose':isMuji?'Fine merino crewneck in oatmeal or grey':isClassic?'Cashmere turtleneck under a blazer':isPreppy?'Fair Isle or cable-knit over a collared shirt':'Chunky sweater or thermal layer',
+    topNote:'Merino or wool — warmth without too much bulk.',
+    bottoms:isGenZ?'Baggy cargos or wide-leg jeans':isMuji?'Straight natural-fabric trousers':isMax?'Wide-leg textured or patterned trousers':isPreppy?'Plaid or classic chino trousers':formal?'Tailored wool trousers':'Jeans or thick knit trousers',
+    bottomsNote:'',
+    outer:isMax?'Statement coat — faux fur, bold pattern, dramatic collar':isGenZ?'Puffer jacket (oversized) or vintage overcoat':isMuji?'Longline wool coat in a neutral':isClassic?'Tailored heavy wool coat':isPreppy?'Duffle coat or heritage overcoat':'Puffer or heavy coat',
+    outerNote:'Non-negotiable today.',
+    acc:isMax?'Clashing scarf + bold beanie + statement gloves':isMuji?'Single neutral scarf, nothing more':isPreppy?'Striped scarf + leather gloves':'Scarf and gloves',
+    accNote:'',
+    ll:layers?['Thermal / base','Chunky knit','Heavy coat']:['Warm knit','Coat'],
+  };
+  if(T<16)return{
+    headline:'transitional layers, smart choices',
+    shoes:rainy?'Ankle boots':isGenZ?'Chunky sneakers or old-school trainers':isMuji?'White minimal sneakers':isClassic?'Leather loafer or Oxford':isPreppy?'Loafers or boat shoes':'Sneakers or ankle boots',
+    shoesNote:rainy?'Bring the umbrella.':'',
+    top:isMax?'Layered prints — stripe under a graphic top':isGenZ?'Oversized long-sleeve or vintage tee over long-sleeve':isMuji?'Unbleached cotton shirt, neatly tucked':isClassic?'Crisp shirt + fine cardigan':isPreppy?'Oxford shirt + cable-knit vest':'Long-sleeve top or light sweater',
+    topNote:'',
+    bottoms:isGenZ?'Baggy straight jeans or wide-leg trousers':isMuji?'Slim linen trousers in sand or off-white':isMax?'Printed or coloured wide-leg trousers':isPreppy?'Chinos or cord trousers':formal?'Tailored trousers':'Straight-leg jeans or chinos',
+    bottomsNote:'',
+    outer:isMax?'Bold-lined coat or embellished denim jacket':isGenZ?'Oversized denim or vintage leather jacket':isMuji?'Unstructured linen or cotton overshirt':isClassic?'Trench coat or structured blazer':isPreppy?'Quilted vest or harrington':'Light jacket or trench',
+    outerNote:'Mornings will be cooler than midday.',
+    acc:rainy?'Compact umbrella':'',accNote:'',
+    ll:layers?['Light knit or shirt','Sweater or vest','Jacket']:['Sweater','Jacket'],
+  };
+  if(T<23)return{
+    headline:'mid-season ease',
+    shoes:isGenZ?'Chunky sneakers or platform sandals':isMuji?'Canvas sneakers or simple leather sandals':isClassic?'Loafers or pointed flats':isPreppy?'Boat shoes or classic loafers':'Clean sneakers or loafers',
+    shoesNote:'',
+    top:isMax?'Bold print shirt or statement blouse — louder the better':isGenZ?'Vintage tee, cropped or oversized':isMuji?'White or neutral cotton shirt, relaxed fit':isClassic?'Silk blouse or fine cotton button-down':isPreppy?'Polo or lightweight Oxford':'Comfortable tee or relaxed top',
+    topNote:'Natural fibres breathe well in this range.',
+    bottoms:isGenZ?'Baggy jeans or parachute trousers':isMuji?'Linen trousers or wide cotton pants':isMax?'Printed midi skirt or colour-clashing trousers':isPreppy?'Khaki shorts or A-line skirt':formal?'Tailored trousers or midi skirt':'Linen trousers or relaxed denim',
+    bottomsNote:'',
+    outer:isMuji?'Thin unstructured overshirt if needed':isGenZ?'Oversized flannel, shirt-jacket tied at waist':'Light blazer or cotton jacket — just in case',
+    outerNote:'Evenings can cool quickly.',
+    acc:'Sunglasses',accNote:'',
+    ll:layers?['Base top','Light layer']:[],
+  };
+  return{
+    headline:'light, breathable, sun-ready',
+    shoes:isGenZ?'Slides or chunky sandals':isMuji?'Simple leather sandals or canvas sneakers':isClassic?'Loafers or elegant sandals':isPreppy?'Espadrilles or boat shoes':'Sandals or light sneakers',
+    shoesNote:'',
+    top:isMax?'Bright printed halter or clashing co-ord':isGenZ?'Crop tee or sheer layered vest':isMuji?'White linen shirt, light and loose':isClassic?'Silk camisole or crisp linen blouse':isPreppy?'Polo or light chambray':'Relaxed tee or breezy top',
+    topNote:'Linen and cotton keep you coolest.',
+    bottoms:isGenZ?'Micro shorts or baggy linen trousers':isMuji?'Wide-leg linen trousers or a simple slip skirt':isMax?'Bright linen or printed co-ord bottoms':isPreppy?'Chino shorts or floral midi skirt':formal?'Linen trousers or a light midi dress':'Shorts or a summer dress',
+    bottomsNote:'',
+    outer:'No coat needed — a linen shirt over a tank handles indoor AC',outerNote:'',
+    acc:'Sunglasses'+(isMax?' + a statement hat':isPreppy?' + a straw hat':''),
+    accNote:"Don't forget SPF.",ll:[],
+  };
+}
+
+function renderToday(temp,wxCode,rain){
+  const o=outfit(temp,wxCode,rain,{...S.body,...S.style});
+  const fn=S.style.notes?`<div class="hint">📅 ${S.style.notes}</div>`:'';
+  document.getElementById('panel-today').innerHTML=`
+    <div class="ow">
+      <p class="outfit-lead">Today calls for <em>${o.headline}.</em></p>
+      <div class="outfit-cards">
+        <div class="ocard"><div class="ocat">Footwear</div><div class="oitem">${o.shoes}</div>${o.shoesNote?`<div class="onote">${o.shoesNote}</div>`:''}</div>
+        <div class="ocard"><div class="ocat">Top</div><div class="oitem">${o.top}</div>${o.topNote?`<div class="onote">${o.topNote}</div>`:''}</div>
+        <div class="ocard"><div class="ocat">Bottoms</div><div class="oitem">${o.bottoms}</div></div>
+        <div class="ocard"><div class="ocat">Outerwear</div><div class="oitem">${o.outer}</div>${o.outerNote?`<div class="onote">${o.outerNote}</div>`:''}</div>
+        ${o.acc?`<div class="ocard" style="grid-column:1/-1"><div class="ocat">Accessories</div><div class="oitem">${o.acc}</div>${o.accNote?`<div class="onote">${o.accNote}</div>`:''}</div>`:''}
+      </div>
+      ${o.ll.length?`<div class="layer-bar"><div class="lbar-label">Layering order</div><div class="lbar-items">${o.ll.map((l,i)=>`<span class="ltag">${l}</span>${i<o.ll.length-1?'<span class="lsep">+</span>':''}`).join('')}</div></div>`:''}
+      ${fn}
+    </div>`;
+}
+
+function renderWeek(daily){
+  const p={...S.body,...S.style};
+  document.getElementById('panel-week').innerHTML=`
+    <div class="ow">
+      <p class="outfit-lead" style="margin-bottom:0.5rem;">Your week, <em>planned.</em></p>
+      ${daily.time.map((d,i)=>{
+        const date=new Date(d+'T12:00:00');
+        const[icon]=wx(daily.weathercode[i]);
+        const max=Math.round(daily.temperature_2m_max[i]);
+        const min=Math.round(daily.temperature_2m_min[i]);
+        const rain=daily.precipitation_sum[i];
+        const o=outfit((max+min)/2,daily.weathercode[i],rain>1,p);
+        return`<div class="week-row">
+          <div>
+            <div class="wday">${date.toLocaleDateString('en-GB',{weekday:'short'})}</div>
+            <div class="wdate">${date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+            <div class="wicon">${icon}</div>
+            <div class="wtemps">${max}° / ${min}°${rain>0.5?` · 🌧 ${rain.toFixed(0)}mm`:''}</div>
+          </div>
+          <div class="woutfit">
+            <strong style="font-family:'Lora',serif;font-weight:400;">${o.headline}</strong><br>
+            <span class="mu">Shoes</span> ${o.shoes} · <span class="mu">Top</span> ${o.top} · <span class="mu">Outer</span> ${o.outer}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── TRIPS with live forecasts
+async function renderTripsPanel(){
+  const el=document.getElementById('panel-trips');
+  if(!S.trips.length){el.innerHTML='<div class="ow"><p class="empty">No trips added.</p></div>';return;}
+  const aes=S.style.aesthetics;
+  const isFormal=['formal','business','mixed'].includes(S.style.dresscode);
+  const isGenZ=aes.includes('genz'),isMuji=aes.includes('muji'),isMax=aes.includes('maximal'),isPreppy=aes.includes('preppy');
+
+  // render skeleton first
+  el.innerHTML=`<div class="ow">
+    <p class="outfit-lead" style="margin-bottom:1.25rem;">Your trips, <em>packed.</em></p>
+    ${S.trips.map(t=>`
+      <div class="trip-block" id="tb-${t.id}">
+        <div class="tbh"><div class="tbdest">${t.dest}</div><div class="tbnights"><span class="spin-sm"></span> fetching forecast</div></div>
+        <div class="tbb"><div class="tbdates">${t.from?fd(t.from):'—'} → ${t.to?fd(t.to):'—'}</div>
+          <div class="trip-loading">Loading weather for ${t.dest}…</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+
+  // fetch forecasts in parallel
+  await Promise.all(S.trips.map(async t=>{
+    try{
+      const g=await geocode(t.dest);
+      // fetch 16 days to cover longer trips
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=16`);
+      const data=await r.json();
+      injectTripForecast(t,data,g.city,isFormal,isGenZ,isMuji,isMax,isPreppy);
+    }catch(e){
+      const block=document.getElementById(`tb-${t.id}`);
+      if(block)block.querySelector('.tbb').innerHTML=`<div class="hint">Could not fetch forecast for ${t.dest}. Check the destination name and try again.</div>${packingHTML(t,7,isFormal,isGenZ,isMuji,isMax,isPreppy)}`;
+    }
+  }));
+}
+
+function injectTripForecast(t,data,city,isFormal,isGenZ,isMuji,isMax,isPreppy){
+  const block=document.getElementById(`tb-${t.id}`);
+  if(!block)return;
+  const nights=t.from&&t.to?Math.round((new Date(t.to)-new Date(t.from))/86400000):7;
+  const d=data.daily;
+
+  // filter days that overlap with trip
+  let dayRows=[];
+  if(t.from){
+    const start=new Date(t.from+'T12:00:00');
+    const end=t.to?new Date(t.to+'T12:00:00'):new Date(start.getTime()+nights*86400000);
+    d.time.forEach((dt,i)=>{
+      const date=new Date(dt+'T12:00:00');
+      if(date>=start&&date<=end){
+        const[icon,desc]=wx(d.weathercode[i]);
+        const max=Math.round(d.temperature_2m_max[i]);
+        const min=Math.round(d.temperature_2m_min[i]);
+        const avg=(max+min)/2;
+        const rain=d.precipitation_sum[i];
+        const o=outfit(avg,d.weathercode[i],rain>1,{...S.body,...S.style});
+        dayRows.push({date,icon,desc,max,min,rain,o});
+      }
+    });
+  } else {
+    // no dates — show first N days of forecast
+    d.time.slice(0,Math.min(nights,16)).forEach((dt,i)=>{
+      const date=new Date(dt+'T12:00:00');
+      const[icon,desc]=wx(d.weathercode[i]);
+      const max=Math.round(d.temperature_2m_max[i]);
+      const min=Math.round(d.temperature_2m_min[i]);
+      const avg=(max+min)/2;
+      const rain=d.precipitation_sum[i];
+      const o=outfit(avg,d.weathercode[i],rain>1,{...S.body,...S.style});
+      dayRows.push({date,icon,desc,max,min,rain,o});
+    });
+  }
+
+  // update header
+  block.querySelector('.tbh').innerHTML=`
+    <div>
+      <div class="tbdest">${t.dest}</div>
+      <div style="font-size:0.68rem;color:rgba(255,255,255,0.0);margin-top:0.1rem;">${city}</div>
+    </div>
+    <div class="tbnights">${nights} night${nights!==1?'s':''}</div>`;
+
+  block.querySelector('.tbb').innerHTML=`
+    <div class="tbdates">${t.from?fd(t.from):'—'} → ${t.to?fd(t.to):'—'} · ${city}</div>
+    ${dayRows.length?`
+    <div class="trip-days">
+      ${dayRows.map(r=>`
+        <div class="trip-day-row">
+          <div class="tdr-date">${r.date.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div>
+          <div class="tdr-wx">${r.icon} ${r.max}°/${r.min}°${r.rain>0.5?` 🌧`:''}</div>
+          <div class="tdr-outfit"><span class="mu">Shoes</span> ${r.o.shoes} · <span class="mu">Top</span> ${r.o.top} · <span class="mu">Outer</span> ${r.o.outer}</div>
+        </div>`).join('')}
+    </div>`:'<div class="hint">Trip dates are outside the 16-day forecast window. Packing list is based on your style profile.</div>'}
+    ${packingHTML(t,nights,isFormal,isGenZ,isMuji,isMax,isPreppy)}`;
+}
+
+function packingHTML(t,nights,isFormal,isGenZ,isMuji,isMax,isPreppy){
+  const tops=Math.min(nights+1,7);
+  const pack={
+    'Tops':[
+      ...Array(Math.ceil(tops*0.6)).fill(isFormal?'Dress shirt / blouse':isGenZ?'Oversized tees or vintage tops':isMuji?'Neutral cotton tees':'Casual tops'),
+      ...Array(Math.floor(tops*0.4)).fill(isFormal?'Fine knit sweater':isMax?'Statement patterned knit':'Light sweater or hoodie'),
+    ].slice(0,tops),
+    'Bottoms':[
+      isGenZ?'Baggy or wide-leg jeans':isMuji?'Straight linen trousers':isFormal?'Tailored trousers':'Jeans',
+      nights>2?(isGenZ?'Second wide-leg pair':isMuji?'Cotton joggers or shorts':isFormal?'Second pair / skirt':'Casual trousers or shorts'):null,
+      'One versatile day-to-night piece',
+    ].filter(Boolean),
+    'Footwear':[
+      isGenZ?'Chunky sneakers':isMuji?'Clean minimal sneakers':isFormal?'Smart loafers':'Sneakers',
+      'Comfortable walking shoes',
+      nights>5?(isGenZ?'Slides or platforms':'Sandals or second pair'):null,
+    ].filter(Boolean),
+    'Outerwear':[nights>4?'Packable jacket or trench':'Light jacket','Weather-proof layer',isMax?'One bold statement coat':null].filter(Boolean),
+    'Essentials':[`Underwear × ${nights+1}`,`Socks × ${nights+1}`,'Sleepwear','Exercise kit'],
+    'Accessories':['Sunglasses',isMuji?'One neutral scarf':isMax?'Multiple statement accessories':'Scarf for cooler evenings','Compact umbrella',nights>4?'Extra tote or daypack':null].filter(Boolean),
+  };
+  return`<div class="pack-title">Packing list · ${nights} nights</div>
+    <div class="pcats">
+      ${Object.entries(pack).map(([cat,items])=>`
+        <div><div class="pcat-label">${cat}</div>
+        <ul class="pitems">${items.map(item=>`<li onclick="this.classList.toggle('checked')">${item}</li>`).join('')}</ul>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderWardrobePanel(){
+  const owned=WD.filter(i=>S.wardrobe[i.id]);
+  const cats=[...new Set(WD.map(i=>i.c))];
+  document.getElementById('panel-wardrobe').innerHTML=`
+    <div class="ow">
+      <p class="outfit-lead" style="margin-bottom:1.25rem;">${owned.length} piece${owned.length!==1?'s':''} <em>catalogued.</em></p>
+      ${owned.length===0&&!S.custom.length?'<p class="empty">No items yet — go back to step 4 to add your wardrobe.</p>':''}
+      ${cats.map(cat=>{
+        const items=owned.filter(i=>i.c===cat);if(!items.length)return'';
+        return`<div class="wsum-cat"><div class="wsum-label">${cat}</div><div class="wsum-tags">${items.map(i=>`<span class="wtag">${i.e} ${i.n}</span>`).join('')}</div></div>`;
+      }).join('')}
+      ${S.custom.length?`<div class="wsum-cat"><div class="wsum-label">Custom pieces</div><div class="wsum-tags">${S.custom.map(c=>`<span class="wtag">${c}</span>`).join('')}</div></div>`:''}
+      <div class="roadmap">
+        <div class="rm-label">On the roadmap</div>
+        <ul class="rm-list">
+          <li>Colour analysis and palette matching</li>
+          <li>Capsule wardrobe builder from your catalogue</li>
+          <li>Trend-based acquisition and cull suggestions</li>
+          <li>Specific item-level daily outfit assembly</li>
+        </ul>
+      </div>
+    </div>`;
+}
+
+function renderFallback(){
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('dash-hero').innerHTML=`
+    <div class="dash-hero-inner">
+      <div><div class="d-loc">📍 Location unavailable</div>
+      <div class="d-temp" style="font-size:3rem;">—</div>
+      <div class="d-desc">Enter your city below to get started</div></div>
+    </div>`;
+  document.getElementById('wx-strip').style.display='none';
+  renderTripsPanel();renderWardrobePanel();
+}
+
+function restart(){
+  goTo(1);
+  document.getElementById('loading-state').style.display='flex';
+  document.getElementById('dashboard').style.display='none';
+}
+</script>
+</body>
+</html>
